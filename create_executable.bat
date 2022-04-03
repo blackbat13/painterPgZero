@@ -1,1 +1,1 @@
-pyinstaller --collect-all pgzero main.py --distpath . --add-data "images;images" --onefile --noconfirm --windowed --clean
+pyinstaller --collect-all pgzero main.py --distpath . --add-data "images;images" --add-data "fonts;fonts" --add-data "sounds;sounds" --add-data "music;music" --onefile --noconfirm --windowed --clean
