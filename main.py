@@ -43,6 +43,9 @@ timer = -1
 
 winner = ""
 
+number_sounds = [sounds.time_over, sounds.one, sounds.two, sounds.three, sounds.four, sounds.five, sounds.six,
+                 sounds.seven, sounds.eight, sounds.nine, sounds.ten]
+
 
 def draw():
     screen.blit(color_surface, (0, 0))
@@ -144,6 +147,7 @@ def update_player(player):
         player.x -= math.sin(math.radians(player.angle + 90)) * player.velocity
         player.y -= math.cos(math.radians(player.angle + 90)) * player.velocity
         player.angle += random.randint(100, 250)
+        sounds.impact.play()
 
     pygame.draw.circle(color_surface, player.color, player.pos, player.radius)
 
@@ -159,12 +163,15 @@ def update_player(player):
     if item.active and player.colliderect(item):
         if item.image == "bomb":
             pygame.draw.circle(color_surface, player.color, player.pos, 250)
+            sounds.explosion.play()
         if item.image == "star":
             for _ in range(20):
                 pygame.draw.circle(color_surface, player.color, (random.randint(0, WIDTH), random.randint(0, HEIGHT)),
                                    50)
+            sounds.star.play()
         if item.image == "coin":
             player.radius += 5
+            sounds.coin.play()
 
         item.active = False
         clock.schedule(activate_item, 1.0 + random.random() * 5)
@@ -182,9 +189,16 @@ def reduce_timer():
 
     timer -= 1
 
+    if timer == 20:
+        sounds.hurry_up.play()
+
+    if timer <= 10:
+        number_sounds[timer].play()
+
     if timer == 0:
         clock.unschedule(reduce_timer)
         compute_winner()
+        music.play("results")
 
 
 def compute_winner():
@@ -265,5 +279,8 @@ def initialize():
     clock.schedule(activate_item, 2.0)
     clock.schedule_interval(reduce_timer, 1)
 
+    music.play("game")
 
+
+music.play("menu")
 pgzrun.go()
