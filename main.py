@@ -45,12 +45,19 @@ players = [blue, red, green, grey]
 color_surface = pygame.Surface((WIDTH, HEIGHT))
 color_surface.fill("white")
 
+item = Actor("bomb")
+item.active = False
+item.type = "bomb"
+
 
 def draw():
     screen.blit(color_surface, (0, 0))
 
     for pl in players:
         pl.draw()
+
+    if item.active:
+        item.draw()
 
 
 def update():
@@ -87,7 +94,24 @@ def update_player(player):
             continue
 
         if player.colliderect(other_player):
+            player.x -= math.sin(math.radians(player.angle + 90)) * player.velocity
+            player.y -= math.cos(math.radians(player.angle + 90)) * player.velocity
             player.angle += random.randint(100, 250)
 
+    if item.active and player.colliderect(item):
+        if item.type == "bomb":
+            pygame.draw.circle(color_surface, player.color, player.pos, 250)
+
+        item.active = False
+        clock.schedule(activate_item, 1.0 + random.random() * 5)
+
+
+def activate_item():
+    item.active = True
+    item.x = random.randint(50, WIDTH - 50)
+    item.y = random.randint(50, HEIGHT - 50)
+
+
+clock.schedule(activate_item, 2.0)
 
 pgzrun.go()
