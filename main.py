@@ -36,11 +36,21 @@ color_surface.fill("black")
 item = Actor("bomb")
 item.active = False
 
-timer = 0
+start_button = Actor("button", (WIDTH / 2, HEIGHT - 50))
+start_button.text_color = "white"
+
+timer = -1
+
+winner = ""
 
 
 def draw():
     screen.blit(color_surface, (0, 0))
+
+    if timer == -1:
+        draw_controls()
+        draw_start_button()
+        return
 
     for pl in players:
         if pl.power:
@@ -50,16 +60,47 @@ def draw():
     if item.active:
         item.draw()
 
-    screen.draw.text(f"{timer}", center=(WIDTH / 2, 40), fontsize=80, color="yellow")
+    screen.draw.text(f"{timer}", center=(WIDTH / 2, 45), fontsize=50, color="yellow", fontname="kenney_bold")
 
     if timer == 0:
         for i, pl in enumerate(players):
             screen.draw.text(f"{pl.name}: {pl.percent:.2f}%", center=(WIDTH / 2, 200 + i * 100), fontsize=80,
-                             color="white")
+                             color="white", fontname="kenney_future_square")
+        screen.draw.text(f"{winner} wins!", center=(WIDTH / 2, HEIGHT - 300), fontsize=100, color="white",
+                         fontname="kenney_bold")
+        draw_start_button()
+
+
+def draw_controls():
+    screen.draw.text(
+        "Blue\nTurn: Q/E\nPower: W\n\nRed\nTurn: I/P\nPower: O\n\nGreen\nTurn: Left/Right\nPower: UP\n\nGrey (keypad)\nTurn: 7/9\nPower: 8",
+        midtop=(WIDTH / 2, 50), fontsize=40, color="white", fontname="kenney_future_square")
+
+
+def draw_start_button():
+    start_button.draw()
+    screen.draw.text("START", center=start_button.pos, fontsize=25, color=start_button.text_color,
+                     fontname="kenney_bold")
+
+
+def on_mouse_down(pos):
+    if timer > 0:
+        return
+
+    if start_button.collidepoint(pos):
+        initialize()
 
 
 def update():
-    if timer == 0:
+    if timer <= 0:
+        mouse_pos = pygame.mouse.get_pos()
+        if start_button.collidepoint(mouse_pos):
+            start_button.image = "button_hover"
+            start_button.text_color = "black"
+        else:
+            start_button.image = "button"
+            start_button.text_color = "white"
+
         return
 
     for pl in players:
@@ -147,6 +188,8 @@ def reduce_timer():
 
 
 def compute_winner():
+    global winner
+
     for pl in players:
         pl.surface_color = color_surface.get_at((int(pl.x), int(pl.y)))
         pl.pixels = 0
@@ -158,8 +201,12 @@ def compute_winner():
                     pl.pixels += 1
                     break
 
+    mx = 0
     for pl in players:
         pl.percent = (pl.pixels / (WIDTH * HEIGHT)) * 100
+        if pl.percent > mx:
+            mx = pl.percent
+            winner = pl.name
 
 
 def activate_power_blue():
@@ -218,7 +265,5 @@ def initialize():
     clock.schedule(activate_item, 2.0)
     clock.schedule_interval(reduce_timer, 1)
 
-
-initialize()
 
 pgzrun.go()
