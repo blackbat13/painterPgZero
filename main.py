@@ -9,45 +9,55 @@ HEIGHT = 1000
 TITLE = "Painter PgZero"
 
 blue = Actor("blue", (50, 50))
+blue.name = "Blue"
 blue.velocity = 10
 blue.max_velocity = 10
 blue.acceleration = 0.1
 blue.radius = 20
 blue.color = "#2184D3"
 blue.keys = {"left": "q", "right": "e", "forward": "w"}
+blue.percent = 0
 
 red = Actor("red", (WIDTH - 50, 50))
+red.name = "Red"
 red.velocity = 20
 red.max_velocity = 20
 red.acceleration = 0.1
 red.radius = 12
 red.color = "#DD4E54"
 red.keys = {"left": "i", "right": "p", "forward": "o"}
+red.percent = 0
 
 green = Actor("green", (50, HEIGHT - 50))
+green.name = "Green"
 green.velocity = 10
 green.max_velocity = 10
 green.acceleration = 0.1
 green.radius = 20
 green.color = "#49B47E"
 green.keys = {"left": "left", "right": "right", "forward": "up"}
+green.percent = 0
 
 grey = Actor("grey", (WIDTH - 50, HEIGHT - 50))
+grey.name = "Grey"
 grey.velocity = 5
 grey.max_velocity = 5
 grey.acceleration = 0.1
 grey.radius = 40
 grey.color = "#937F7C"
 grey.keys = {"left": "kp7", "right": "kp9", "forward": "kp8"}
+grey.percent = 0
 
 players = [blue, red, green, grey]
 
 color_surface = pygame.Surface((WIDTH, HEIGHT))
-color_surface.fill("white")
+color_surface.fill("black")
 
 item = Actor("bomb")
 item.active = False
 item.type = "bomb"
+
+timer = 60
 
 
 def draw():
@@ -59,8 +69,17 @@ def draw():
     if item.active:
         item.draw()
 
+    screen.draw.text(f"{timer}", center=(WIDTH / 2, 40), fontsize=80, color="yellow")
+
+    if timer == 0:
+        for i, pl in enumerate(players):
+            screen.draw.text(f"{pl.name}: {pl.percent:.2f}%", center=(WIDTH / 2, 200 + i * 100), fontsize=80, color="white")
+
 
 def update():
+    if timer == 0:
+        return
+
     for pl in players:
         update_player(pl)
 
@@ -112,6 +131,32 @@ def activate_item():
     item.y = random.randint(50, HEIGHT - 50)
 
 
+def reduce_timer():
+    global timer
+
+    timer -= 1
+
+    if timer == 0:
+        clock.unschedule(reduce_timer)
+        compute_winner()
+
+def compute_winner():
+    for pl in players:
+        pl.surface_color = color_surface.get_at((int(pl.x), int(pl.y)))
+        pl.pixels = 0
+    for x in range(WIDTH):
+        for y in range(HEIGHT):
+            color = color_surface.get_at((x, y))
+            for pl in players:
+                if color == pl.surface_color:
+                    pl.pixels += 1
+                    break
+
+    for pl in players:
+        pl.percent = (pl.pixels / (WIDTH * HEIGHT)) * 100
+
+
 clock.schedule(activate_item, 2.0)
+clock.schedule_interval(reduce_timer, 1)
 
 pgzrun.go()
