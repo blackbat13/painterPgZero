@@ -10,43 +10,23 @@ TITLE = "Painter PgZero"
 
 blue = Actor("blue", (50, 50))
 blue.name = "Blue"
-blue.velocity = 10
-blue.max_velocity = 10
-blue.acceleration = 0.1
-blue.radius = 20
 blue.color = "#2184D3"
-blue.keys = {"left": "q", "right": "e", "forward": "w"}
-blue.percent = 0
+blue.keys = {"left": "q", "right": "e", "power": "w"}
 
 red = Actor("red", (WIDTH - 50, 50))
 red.name = "Red"
-red.velocity = 20
-red.max_velocity = 20
-red.acceleration = 0.1
-red.radius = 12
 red.color = "#DD4E54"
-red.keys = {"left": "i", "right": "p", "forward": "o"}
-red.percent = 0
+red.keys = {"left": "i", "right": "p", "power": "o"}
 
 green = Actor("green", (50, HEIGHT - 50))
 green.name = "Green"
-green.velocity = 10
-green.max_velocity = 10
-green.acceleration = 0.1
-green.radius = 20
 green.color = "#49B47E"
-green.keys = {"left": "left", "right": "right", "forward": "up"}
-green.percent = 0
+green.keys = {"left": "left", "right": "right", "power": "up"}
 
 grey = Actor("grey", (WIDTH - 50, HEIGHT - 50))
 grey.name = "Grey"
-grey.velocity = 5
-grey.max_velocity = 5
-grey.acceleration = 0.1
-grey.radius = 40
 grey.color = "#937F7C"
-grey.keys = {"left": "kp7", "right": "kp9", "forward": "kp8"}
-grey.percent = 0
+grey.keys = {"left": "kp7", "right": "kp9", "power": "kp8"}
 
 players = [blue, red, green, grey]
 
@@ -55,15 +35,16 @@ color_surface.fill("black")
 
 item = Actor("bomb")
 item.active = False
-item.type = "bomb"
 
-timer = 60
+timer = 0
 
 
 def draw():
     screen.blit(color_surface, (0, 0))
 
     for pl in players:
+        if pl.power:
+            screen.draw.filled_circle(pl.pos, 25, "white")
         pl.draw()
 
     if item.active:
@@ -73,7 +54,8 @@ def draw():
 
     if timer == 0:
         for i, pl in enumerate(players):
-            screen.draw.text(f"{pl.name}: {pl.percent:.2f}%", center=(WIDTH / 2, 200 + i * 100), fontsize=80, color="white")
+            screen.draw.text(f"{pl.name}: {pl.percent:.2f}%", center=(WIDTH / 2, 200 + i * 100), fontsize=80,
+                             color="white")
 
 
 def update():
@@ -84,19 +66,35 @@ def update():
         update_player(pl)
 
 
+def use_power(player):
+    if player.name == "Blue":
+        player.power = False
+        color_surface.fill("black")
+        clock.schedule_unique(activate_power_blue, player.power_timeout)
+    if player.name == "Red":
+        player.power = False
+        player.velocity += 5
+        clock.schedule_unique(activate_power_red, player.power_timeout)
+    if player.name == "Green":
+        player.power = False
+        for _ in range(150):
+            pl = random.choice(players)
+            pygame.draw.circle(color_surface, pl.color, (random.randint(0, WIDTH), random.randint(0, HEIGHT)), 50)
+        clock.schedule_unique(activate_power_green, player.power_timeout)
+    if player.name == "Grey":
+        player.power = False
+        player.radius += 15
+        player.velocity -= 1
+        clock.schedule_unique(activate_power_grey, player.power_timeout)
+
+
 def update_player(player):
     if keyboard[player.keys["left"]]:
         player.angle += 1 + player.velocity / 2
     if keyboard[player.keys["right"]]:
         player.angle -= 1 + player.velocity / 2
-    if keyboard[player.keys["forward"]]:
-        player.velocity += player.acceleration
-
-    if player.velocity > player.max_velocity:
-        player.velocity = player.max_velocity
-
-    if player.velocity < 0:
-        player.velocity = 0
+    if keyboard[player.keys["power"]] and player.power:
+        use_power(player)
 
     player.x += math.sin(math.radians(player.angle + 90)) * player.velocity
     player.y += math.cos(math.radians(player.angle + 90)) * player.velocity
@@ -118,8 +116,14 @@ def update_player(player):
             player.angle += random.randint(100, 250)
 
     if item.active and player.colliderect(item):
-        if item.type == "bomb":
+        if item.image == "bomb":
             pygame.draw.circle(color_surface, player.color, player.pos, 250)
+        if item.image == "star":
+            for _ in range(20):
+                pygame.draw.circle(color_surface, player.color, (random.randint(0, WIDTH), random.randint(0, HEIGHT)),
+                                   50)
+        if item.image == "coin":
+            player.radius += 5
 
         item.active = False
         clock.schedule(activate_item, 1.0 + random.random() * 5)
@@ -129,6 +133,7 @@ def activate_item():
     item.active = True
     item.x = random.randint(50, WIDTH - 50)
     item.y = random.randint(50, HEIGHT - 50)
+    item.image = random.choice(["bomb", "star", "coin"])
 
 
 def reduce_timer():
@@ -139,6 +144,7 @@ def reduce_timer():
     if timer == 0:
         clock.unschedule(reduce_timer)
         compute_winner()
+
 
 def compute_winner():
     for pl in players:
@@ -156,7 +162,63 @@ def compute_winner():
         pl.percent = (pl.pixels / (WIDTH * HEIGHT)) * 100
 
 
-clock.schedule(activate_item, 2.0)
-clock.schedule_interval(reduce_timer, 1)
+def activate_power_blue():
+    blue.power = True
+
+
+def activate_power_red():
+    red.power = True
+
+
+def activate_power_green():
+    green.power = True
+
+
+def activate_power_grey():
+    grey.power = True
+
+
+def initialize():
+    global timer
+
+    color_surface.fill("black")
+
+    blue.pos = (50, 50)
+    red.pos = (WIDTH - 50, 50)
+    green.pos = (50, HEIGHT - 50)
+    grey.pos = (WIDTH - 50, HEIGHT - 50)
+
+    blue.velocity = 10
+    blue.radius = 20
+    blue.power = False
+    blue.power_timeout = 45
+    clock.schedule_unique(activate_power_blue, blue.power_timeout)
+
+    red.velocity = 20
+    red.radius = 12
+    red.power = False
+    red.power_timeout = 5
+    clock.schedule_unique(activate_power_red, red.power_timeout)
+
+    green.velocity = 10
+    green.radius = 20
+    green.power = False
+    green.power_timeout = 30
+    clock.schedule_unique(activate_power_green, green.power_timeout)
+
+    grey.velocity = 5
+    grey.radius = 40
+    grey.power = False
+    grey.power_timeout = 15
+    clock.schedule_unique(activate_power_grey, grey.power_timeout)
+
+    item.active = False
+
+    timer = 60
+    clock.schedule(activate_item, 2.0)
+    clock.schedule_interval(reduce_timer, 1)
+
+
+initialize()
 
 pgzrun.go()
