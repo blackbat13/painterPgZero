@@ -39,6 +39,12 @@ item.active = False
 start_button = Actor("button", (WIDTH / 2, HEIGHT - 50))
 start_button.text_color = "white"
 
+music_button = Actor("music_on", (WIDTH - 100, 50))
+music_button.on = True
+
+sound_button = Actor("sound_on", (WIDTH - 50, 50))
+sound_button.on = True
+
 timer = -1
 
 winner = ""
@@ -53,6 +59,8 @@ def draw():
     if timer == -1:
         draw_controls()
         draw_start_button()
+        music_button.draw()
+        sound_button.draw()
         return
 
     for pl in players:
@@ -73,10 +81,13 @@ def draw():
                          fontname="kenney_bold")
         draw_start_button()
 
+    music_button.draw()
+    sound_button.draw()
+
 
 def draw_controls():
     screen.draw.text(
-        "Blue\nTurn: Q/E\nPower: W\n\nRed\nTurn: I/P\nPower: O\n\nGreen\nTurn: Left/Right\nPower: UP\n\nGrey (keypad)\nTurn: 7/9\nPower: 8",
+        "Blue\nTurn: Q/E\nPower: W\n\nRed\nTurn: I/P\nPower: O\n\nGreen\nTurn: Left/Right\nPower: UP\n\nGrey (keypad)\nTurn: 7/9\nPower: 8\n\nStart: SPACE\nMute music: M\nMute sounds: S",
         midtop=(WIDTH / 2, 50), fontsize=40, color="white", fontname="kenney_future_square")
 
 
@@ -87,19 +98,45 @@ def draw_start_button():
 
 
 def on_mouse_down(pos):
-    if timer > 0:
-        return
-
-    if start_button.collidepoint(pos):
+    if timer <= 0 and start_button.collidepoint(pos):
         initialize()
+
+    if music_button.collidepoint(pos):
+        switch_music()
+
+    if sound_button.collidepoint(pos):
+        switch_sound()
 
 
 def on_key_down(key):
-    if timer > 0:
-        return
-
-    if key == keys.SPACE:
+    if timer <= 0 and key == keys.SPACE:
         initialize()
+
+    if key == keys.M:
+        switch_music()
+
+    if key == keys.S:
+        switch_sound()
+
+
+def switch_music():
+    if music_button.on:
+        music_button.on = False
+        music_button.image = "music_off"
+        music.set_volume(0)
+    else:
+        music_button.on = True
+        music_button.image = "music_on"
+        music.set_volume(1)
+
+
+def switch_sound():
+    if sound_button.on:
+        sound_button.on = False
+        sound_button.image = "sound_off"
+    else:
+        sound_button.on = True
+        sound_button.image = "sound_on"
 
 
 def update():
@@ -155,7 +192,8 @@ def update_player(player):
         player.x -= math.sin(math.radians(player.angle + 90)) * player.velocity
         player.y -= math.cos(math.radians(player.angle + 90)) * player.velocity
         player.angle += random.randint(100, 250)
-        sounds.impact.play()
+        if sound_button.on:
+            sounds.impact.play()
 
     pygame.draw.circle(color_surface, player.color, player.pos, player.radius)
 
@@ -171,15 +209,18 @@ def update_player(player):
     if item.active and player.colliderect(item):
         if item.image == "bomb":
             pygame.draw.circle(color_surface, player.color, player.pos, 250)
-            sounds.explosion.play()
+            if sound_button.on:
+                sounds.explosion.play()
         if item.image == "star":
             for _ in range(20):
                 pygame.draw.circle(color_surface, player.color, (random.randint(0, WIDTH), random.randint(0, HEIGHT)),
                                    50)
-            sounds.star.play()
+            if sound_button.on:
+                sounds.star.play()
         if item.image == "coin":
             player.radius += 5
-            sounds.coin.play()
+            if sound_button.on:
+                sounds.coin.play()
 
         item.active = False
         clock.schedule(activate_item, 1.0 + random.random() * 5)
@@ -197,10 +238,10 @@ def reduce_timer():
 
     timer -= 1
 
-    if timer == 20:
+    if timer == 20 and sound_button.on:
         sounds.hurry_up.play()
 
-    if timer <= 10:
+    if timer <= 10 and sound_button.on:
         number_sounds[timer].play()
 
     if timer == 0:
