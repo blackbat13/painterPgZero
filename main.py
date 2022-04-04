@@ -94,6 +94,14 @@ def on_mouse_down(pos):
         initialize()
 
 
+def on_key_down(key):
+    if timer > 0:
+        return
+
+    if key == keys.SPACE:
+        initialize()
+
+
 def update():
     if timer <= 0:
         mouse_pos = pygame.mouse.get_pos()
