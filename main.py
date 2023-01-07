@@ -1,18 +1,19 @@
 import math
-import pgzrun
-import pygame
 import random
 
-### CONFIGURATION ###
+import pgzrun
+import pygame
+
+""" CONFIGURATION """
 
 WIDTH = 1000
 HEIGHT = 1000
 
-TITLE = "Painter PgZero"
+TITLE = "Painter Pygame Zero"
 
 MARGIN = 50
 
-### VARIABLES ###
+""" VARIABLES """
 
 blue = Actor("blue")
 blue.name = "Blue"
@@ -64,7 +65,8 @@ number_sounds = [sounds.time_over, sounds.one, sounds.two, sounds.three, sounds.
                  sounds.seven, sounds.eight, sounds.nine, sounds.ten]
 
 
-### DRAW ###
+""" DRAW """
+
 
 def draw():
     screen.blit(color_surface, (0, 0))
@@ -75,7 +77,8 @@ def draw():
 
     draw_players()
     draw_item()
-    screen.draw.text(f"{timer}", center=(WIDTH / 2, 45), fontsize=50, color="yellow", fontname="kenney_bold")
+    screen.draw.text(f"{timer}", center=(WIDTH / 2, 45),
+                     fontsize=50, color="yellow", fontname="kenney_bold")
 
     if timer == 0:
         draw_results()
@@ -106,7 +109,7 @@ def draw_item():
 def draw_results():
     for i, pl in enumerate(players):
         screen.draw.text(f"{pl.name}: {pl.percent:.2f}%", center=(WIDTH / 2, 200 + i * 100), fontsize=80,
-                             color="white", fontname="kenney_future_square")
+                         color="white", fontname="kenney_future_square")
         screen.draw.text(f"{winner} wins!", center=(WIDTH / 2, HEIGHT - 300), fontsize=100, color="white",
                          fontname="kenney_bold")
         draw_start_button()
@@ -124,12 +127,13 @@ def draw_start_button():
                      fontname="kenney_bold")
 
 
-### UPDATE ###
+""" UPDATE """
+
 
 def update():
     if timer <= 0:
         return
-    
+
     for pl in players:
         update_player(pl)
 
@@ -138,7 +142,7 @@ def update_player(player):
     update_player_movement(player)
     pygame.draw.circle(color_surface, player.color, player.pos, player.radius)
     update_player_collisions(player)
-        
+
 
 def update_player_movement(player):
     if keyboard[player.keys["left"]]:
@@ -167,15 +171,18 @@ def update_player_collisions(player):
             continue
 
         if player.colliderect(other_player):
-            player.x -= math.sin(math.radians(player.angle + 90)) * player.velocity
-            player.y -= math.cos(math.radians(player.angle + 90)) * player.velocity
+            player.x -= math.sin(math.radians(player.angle + 90)
+                                 ) * player.velocity
+            player.y -= math.cos(math.radians(player.angle + 90)
+                                 ) * player.velocity
             player.angle += random.randint(100, 250)
 
     if item.active and player.colliderect(item):
         use_item(player, item)
 
 
-### EVENTS ###
+""" EVENTS """
+
 
 def on_mouse_down(pos):
     if timer <= 0 and start_button.collidepoint(pos):
@@ -208,7 +215,8 @@ def on_key_down(key):
         switch_sound()
 
 
-### HELPERS ###
+""" HELPERS """
+
 
 def switch_music():
     if music_button.on:
@@ -245,7 +253,8 @@ def use_power(player):
         player.power = False
         for _ in range(150):
             pl = random.choice(players)
-            pygame.draw.circle(color_surface, pl.color, (random.randint(0, WIDTH), random.randint(0, HEIGHT)), 50)
+            pygame.draw.circle(color_surface, pl.color, (random.randint(
+                0, WIDTH), random.randint(0, HEIGHT)), 50)
         clock.schedule_unique(activate_power_green, player.power_timeout)
 
     if player.name == "Grey":
@@ -264,10 +273,10 @@ def use_item(player, item):
     if item.image == "star":
         for _ in range(20):
             pygame.draw.circle(color_surface, player.color, (random.randint(0, WIDTH), random.randint(0, HEIGHT)),
-                                50)
+                               50)
         if sound_button.on:
             sounds.star.play()
-            
+
     if item.image == "coin":
         player.radius += 5
         if sound_button.on:
@@ -340,7 +349,8 @@ def activate_power_grey():
     grey.power = True
 
 
-### INITIALIZATION ###
+""" INITIALIZATION """
+
 
 def initialize():
     color_surface.fill("black")
@@ -351,7 +361,7 @@ def initialize():
     initialize_player_grey()
     initialize_item()
     initialize_timer()
-    
+
     music.play("game")
 
 
